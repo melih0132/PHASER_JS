@@ -8,12 +8,6 @@
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
 </head>
 <body>
-
-    <div id="score-board" style="display:none;">
-        <h3>Meilleur Score: <span id="best-score">0</span></h3>
-    </div>
-    <button id="restart-button" onclick="restartGame()" style="display:none;">Rejouer</button>
-
     <script>
         var config = {
             type: Phaser.AUTO,
@@ -185,8 +179,6 @@
                 player.setTint(0xff0000);
                 gameOver = true;
                 scoreText.setText('Vous êtes mort');
-                document.getElementById('restart-button').style.display = 'block'; // Affiche le bouton Rejouer
-                updateBestScore(score);
             }
         }
 
@@ -198,52 +190,9 @@
                     this.physics.pause();
                     player.setTint(0xff0000);
                     scoreText.setText('Temps écoulé');
-                    document.getElementById('restart-button').style.display = 'block'; // Affiche le bouton Rejouer
-                    updateBestScore(score);
                     gameOver = true;
                 }
             }
-        }
-
-        function updateBestScore(currentScore) {
-            var bestScoreElement = document.getElementById('best-score');
-            var bestScore = parseInt(bestScoreElement.textContent) || 0;
-
-            if (currentScore > bestScore) {
-                bestScoreElement.textContent = currentScore;
-                document.getElementById('score-board').style.display = 'block'; // Afficher le panneau de score
-            }
-        }
-
-        function restartGame() {
-            // Réinitialiser toutes les variables de jeu
-            this.scene.restart();
-            score = 0;
-            chrono = 60;
-            life = 100;
-            gameOver = false;
-
-            // Réinitialiser le texte affiché
-            scoreText.setText('Score: 0');
-            chronoText.setText('Temps: 60');
-            lifeBar.clear();
-            lifeBar.fillStyle(0xff0000, 1);
-            lifeBar.fillRect(5, 5, lifeBarWidth, 20);
-
-            // Cacher le bouton Rejouer
-            document.getElementById('restart-button').style.display = 'none';
-
-            // Réinitialiser les groupes
-            coins.clear(true, true);
-            bombs.clear(true, true);
-
-            // Redémarrer la génération des pièces
-            this.time.addEvent({
-                delay: 400,
-                callback: addCoin,
-                callbackScope: this,
-                loop: true
-            });
         }
     </script>
 

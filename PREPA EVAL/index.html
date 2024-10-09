@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Jeu Prépa TD</title>
+    <title>Collect the Coins</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.js"></script>
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
@@ -29,74 +29,93 @@
         };
 
         var game = new Phaser.Game(config);
-        var player, platforms, stars, scoreText, bombs, cursors;
-        var score = 0, gameOver = false;
+        var player, platforms, coins, enemies, cursors;
+        var score = 0, scoreText, chrono = 60, chronoText;
+        var life = 100, lifeBar, lifeBarWidth = 200, gameOver = false;
 
         function preload() {
-            // Chargement des images depuis le dossier img
-            this.load.image('sky', 'assets/img/sky.png');
-            this.load.image('ground', 'assets/img/platform.png');
-            this.load.image('star', 'assets/img/star.png');
-            this.load.image('bomb', 'assets/img/bomb.png');
-            this.load.spritesheet('dude', 'assets/img/dude.png', { frameWidth: 32, frameHeight: 48 });
+            // Chargement des images (peut être personnalisé)
+            this.load.image('background', 'assets/img/sky2.png');
+            this.load.image('ground', 'assets/img/grass.png');
+            this.load.image('coin', 'assets/img/ai-coin.png');
+            this.load.image('enemy', 'assets/img/rock.png');
+            this.load.spritesheet('player', 'assets/img/dude.png', { frameWidth: 32, frameHeight: 48 });
         }
 
         function create() {
-            // Ajout des éléments visuels
-            this.add.image(400, 300, 'sky');
+            // Ajout du fond d'écran
+            this.add.image(400, 300, 'background');
 
+            // Création des plateformes
             platforms = this.physics.add.staticGroup();
             platforms.create(400, 568, 'ground').setScale(2).refreshBody();
             platforms.create(600, 400, 'ground');
             platforms.create(50, 250, 'ground');
             platforms.create(750, 220, 'ground');
 
-            player = this.physics.add.sprite(100, 450, 'dude');
+            // Ajout du joueur
+            player = this.physics.add.sprite(100, 450, 'player');
             player.setBounce(0.2);
             player.setCollideWorldBounds(true);
 
             this.anims.create({
                 key: 'left',
-                frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
                 frameRate: 10,
                 repeat: -1
             });
 
             this.anims.create({
                 key: 'turn',
-                frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
+                frames: this.anims.generateFrameNumbers('player', { start: 4, end: 4 }),
                 frameRate: 20
             });
 
             this.anims.create({
                 key: 'right',
-                frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+                frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
                 frameRate: 10,
                 repeat: -1
             });
 
             this.physics.add.collider(player, platforms);
-
             cursors = this.input.keyboard.createCursorKeys();
 
-            stars = this.physics.add.group({
-                key: 'star',
+            // Ajout des pièces
+            coins = this.physics.add.group({
+                key: 'coin',
                 repeat: 11,
                 setXY: { x: 12, y: 0, stepX: 70 }
             });
 
-            stars.children.iterate(function (child) {
+            coins.children.iterate(function (child) {
                 child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
             });
 
-            this.physics.add.collider(stars, platforms);
-            this.physics.add.overlap(player, stars, collectStar, null, this);
+            this.physics.add.collider(coins, platforms);
+            this.physics.add.overlap(player, coins, collectCoin, null, this);
 
-            bombs = this.physics.add.group();
-            this.physics.add.collider(bombs, platforms);
-            this.physics.add.collider(player, bombs, hitBomb, null, this);
+            // Ajout des ennemis
+            enemies = this.physics.add.group();
+            var enemy = enemies.create(400, 100, 'enemy');
+            enemy.setBounce(1);
+            enemy.setCollideWorldBounds(true);
+            enemy.setVelocity(Phaser.Math.Between(-200, 200), 20);
 
-            scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+            this.physics.add.collider(enemies, platforms);
+            this.physics.add.collider(player, enemies, hitEnemy, null, this);
+
+            // Affichage du score
+            scoreText = this.add.text(16, 32, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+            // Chronomètre
+            chronoText = this.add.text(700, 16, 'Temps: 60', { fontSize: '32px', fill: '#000' });
+            this.time.addEvent({ delay: 1000, callback: updateChrono, callbackScope: this, loop: true });
+
+            // Barre de vie
+            lifeBar = this.add.graphics();
+            lifeBar.fillStyle(0xff0000, 1);
+            lifeBar.fillRect(5, 5, lifeBarWidth, 20);
         }
 
         function update() {
@@ -117,34 +136,45 @@
                 player.anims.play('turn');
             }
 
-            if (cursors.up.isDown && player.body.touching.down) {
+            if (cursors.up.isDown) {
                 player.setVelocityY(-330);
             }
         }
 
-        function collectStar(player, star) {
-            star.disableBody(true, true);
+        function collectCoin(player, coin) {
+            coin.disableBody(true, true);
             score += 10;
             scoreText.setText('Score: ' + score);
 
-            if (stars.countActive(true) === 0) {
-                stars.children.iterate(function (child) {
-                    child.enableBody(true, child.x, 0, true, true);
-                });
-
-                var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-                var bomb = bombs.create(x, 16, 'bomb');
-                bomb.setBounce(1);
-                bomb.setCollideWorldBounds(true);
-                bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            if (coins.countActive(true) === 0) {
+                scoreText.setText('Vous avez gagné !');
+                this.physics.pause();
+                gameOver = true;
             }
         }
 
-        function hitBomb(player, bomb) {
-            this.physics.pause();
-            player.setTint(0xff0000);
-            player.anims.play('turn');
-            gameOver = true;
+        function hitEnemy(player, enemy) {
+            life -= 20;
+            lifeBar.clear();
+            lifeBar.fillStyle(0xff0000, 1);
+            lifeBar.fillRect(5, 5, lifeBarWidth * (life / 100), 20);
+
+            if (life <= 0) {
+                this.physics.pause();
+                player.setTint(0xff0000);
+                gameOver = true;
+            }
+        }
+
+        function updateChrono() {
+            chrono -= 1;
+            chronoText.setText('Temps: ' + chrono);
+            if (chrono <= 0) {
+                this.physics.pause();
+                player.setTint(0xff0000);
+                scoreText.setText('Temps écoulé');
+                gameOver = true;
+            }
         }
     </script>
 

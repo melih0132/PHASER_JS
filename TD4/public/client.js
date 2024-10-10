@@ -111,12 +111,12 @@ function update() {
 }
 
 function addPlayer(self, playerInfo) {
-    player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude');
+    player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude', 4).setTint(playerInfo.c);
     player.setCollideWorldBounds(true);
 }
 
 function addOtherPlayers(self, playerInfo) {
-    const otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude').setTint(playerInfo.c);
+    const otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude', 4).setTint(playerInfo.c);
     otherPlayer.playerId = playerInfo.playerId;
     otherPlayers.add(otherPlayer);
 }

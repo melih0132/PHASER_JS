@@ -82,34 +82,28 @@ function create() {
 
 function update() {
     if (player) {
-        player.setVelocity(0); // Stop any previous movement
+        player.setVelocity(0);
 
-        // Déplacement vers la gauche
         if (cursors.left.isDown) {
             player.setVelocityX(-160);
             player.anims.play('left', true);
         }
-        // Déplacement vers la droite
         else if (cursors.right.isDown) {
             player.setVelocityX(160);
             player.anims.play('right', true);
         }
 
-        // Déplacement vers le haut
         if (cursors.up.isDown) {
             player.setVelocityY(-160);
         }
-        // Déplacement vers le bas
         else if (cursors.down.isDown) {
             player.setVelocityY(160);
         }
 
-        // Si aucune touche directionnelle n'est appuyée, jouer l'animation "turn" (statique)
         if (!cursors.left.isDown && !cursors.right.isDown && !cursors.up.isDown && !cursors.down.isDown) {
             player.anims.play('turn');
         }
 
-        // Envoi de la position du joueur au serveur
         var x = player.x;
         var y = player.y;
         socket.emit('playerMovement', { x: x, y: y });

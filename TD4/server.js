@@ -17,7 +17,6 @@ var players = {};
 
 io.on('connection', (socket) => {
   console.log('a user is connected: ', socket.id);
-  // creation d’un nouveau et ajout à la liste des joueurs
   players[socket.id] = {
     x: Math.floor(Math.random() * 700) + 50,
     y: Math.floor(Math.random() * 500) + 50,
@@ -38,7 +37,6 @@ io.on('connection', (socket) => {
   socket.on('playerMovement', function (movementData) {
     players[socket.id].x = movementData.x;
     players[socket.id].y = movementData.y;
-    // envoi un message aux autres joueur que le joueur s’est déplacé
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
 });

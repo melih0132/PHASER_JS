@@ -17,7 +17,7 @@
                 default: 'arcade',
                 arcade: {
                     gravity: { y: 300 },
-                    debug: false
+                    debug: true
                 }
             },
             scene: {
@@ -101,7 +101,7 @@
                 fill: '#000'
             });
 
-            chronoText = this.add.text(630, 16, 'Temps: 60', {
+            chronoText = this.add.text(640, 5, 'Temps: 60', {
                 fontFamily: 'Arial, Helvetica, sans-serif',
                 fontSize: '32px',
                 fill: '#000'
@@ -149,7 +149,7 @@
 
         function collectCoin(player, coin) {
             coin.disableBody(true, true);
-            score += 1; // 1 point par étoile
+            score += 1;
             scoreText.setText('Score: ' + score);
 
             if (score % 10 === 0) {
@@ -164,7 +164,7 @@
                 bomb.setBounce(1);
                 bomb.setCollideWorldBounds(true);
                 bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-                bomb.allowGravity = true; // S'assurer que les bombes tombent
+                bomb.allowGravity = true;
             }
         }
 
@@ -178,7 +178,8 @@
                 this.physics.pause();
                 player.setTint(0xff0000);
                 gameOver = true;
-                scoreText.setText('Vous êtes mort');
+                scoreText.setText('Vous êtes mort, Score : ' + score);
+                scoreText.y = 5;
             }
         }
 

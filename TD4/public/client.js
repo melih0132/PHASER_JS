@@ -20,7 +20,7 @@ var game = new Phaser.Game(config);
 var socket;
 
 var player, cursors, otherPlayers;
-var star, stars;
+let stars;
 
 function preload() {
     this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
@@ -32,25 +32,23 @@ function create() {
     socket = io();
 
     stars = this.physics.add.group();
-
-    socket.on('currentStars', function (starsArray) {
-        starsArray.forEach(function (starInfo) {
-            addStar(self, starInfo);
+    
+    socket.on('init', (initialStars) => {
+        initialStars.forEach(star => {
+            createStar(star.x, star.y);
         });
     });
 
-    socket.on('starGenerated', function (starInfo) {
-        addStar(self, starInfo);
+    socket.on('newStar', (star) => {
+        createStar(star.x, star.y);
     });
 
-    socket.on('starCollected', function (starId) {
-        stars.getChildren().forEach(function (star) {
-            if (star.starId === starId) {
-                star.destroy();
-            }
-        });
+    this.input.on('pointerdown', (pointer) => {
+        const star = { x: pointer.x, y: pointer.y };
+        createStar(star.x, star.y);
+        socket.emit('newStar', star);
     });
-
+    
     otherPlayers = this.physics.add.group();
 
     socket.on('currentPlayers', function (players) {
@@ -135,23 +133,17 @@ function update() {
 }
 
 function addPlayer(self, playerInfo) {
-    player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude', 4).setTint(playerInfo.c);
+    player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude').setTint(playerInfo.c);
     player.setCollideWorldBounds(true);
 }
 
 function addOtherPlayers(self, playerInfo) {
-    const otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude', 4).setTint(playerInfo.c);
+    const otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude').setTint(playerInfo.c);
     otherPlayer.playerId = playerInfo.playerId;
     otherPlayers.add(otherPlayer);
 }
 
-function addStar(self, starInfo) {
-    const newStar = self.physics.add.image(starInfo.x, starInfo.y, 'star');
-    newStar.starId = starInfo.starId;
-    stars.add(newStar);
-}
-
-function collectStar(player, star) {
-    star.disableBody(true, true);
-    socket.emit('starCollected', { starId: star.starId });
+function createStar(x, y) {
+    const star = stars.create(x, y, 'star');
+    star.setOrigin(0.5, 0.5);
 }

@@ -17,15 +17,39 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-var player, cursors, otherPlayers, socket;
+var socket;
+
+var player, cursors, otherPlayers;
+var star, stars;
 
 function preload() {
     this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.image('star', 'assets/star.png');
 }
 
 function create() {
     var self = this;
     socket = io();
+
+    stars = this.physics.add.group();
+
+    socket.on('currentStars', function (starsArray) {
+        starsArray.forEach(function (starInfo) {
+            addStar(self, starInfo);
+        });
+    });
+
+    socket.on('starGenerated', function (starInfo) {
+        addStar(self, starInfo);
+    });
+
+    socket.on('starCollected', function (starId) {
+        stars.getChildren().forEach(function (star) {
+            if (star.starId === starId) {
+                star.destroy();
+            }
+        });
+    });
 
     otherPlayers = this.physics.add.group();
 
@@ -69,7 +93,7 @@ function create() {
     });
     this.anims.create({
         key: 'turn',
-        frames: [{ key: 'dude', frame: 4 }],
+        frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
         frameRate: 20
     });
     this.anims.create({
@@ -119,4 +143,15 @@ function addOtherPlayers(self, playerInfo) {
     const otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'dude', 4).setTint(playerInfo.c);
     otherPlayer.playerId = playerInfo.playerId;
     otherPlayers.add(otherPlayer);
+}
+
+function addStar(self, starInfo) {
+    const newStar = self.physics.add.image(starInfo.x, starInfo.y, 'star');
+    newStar.starId = starInfo.starId;
+    stars.add(newStar);
+}
+
+function collectStar(player, star) {
+    star.disableBody(true, true);
+    socket.emit('starCollected', { starId: star.starId });
 }

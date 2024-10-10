@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>PREPA EVAL</title>
@@ -7,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.js"></script>
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
 </head>
+
 <body>
     <script>
         var config = {
@@ -107,7 +109,12 @@
                 fill: '#000'
             });
 
-            this.time.addEvent({ delay: 1000, callback: updateChrono, callbackScope: this, loop: true });
+            this.time.addEvent({
+                delay: 1000,
+                callback: updateChrono,
+                callbackScope: this,
+                loop: true
+            });
 
             lifeBar = this.add.graphics();
             lifeBar.fillStyle(0xff0000, 1);
@@ -198,4 +205,5 @@
     </script>
 
 </body>
+
 </html>
